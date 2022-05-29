@@ -29,7 +29,7 @@ CONFIG_SCHEMA = vol.Schema(
         DOMAIN: vol.Schema(
             {
                 vol.Optional(CONF_AUTH_REQUIRED, default=True): cv.boolean,
-                vol.Optional(CONF_THRESHOLD, default=30): cv.positive_int
+                vol.Optional(CONF_THRESHOLD, default=60): cv.positive_int
             }
         )
     },
@@ -80,7 +80,7 @@ class HealthCheckView(HomeAssistantView):
         last_seen = None
 
         if hass.state != CoreState.running:
-            _LOGGER.info(f"HomeAssistant state {hass.state} is not running, reporting as healthy")
+            _LOGGER.info(f"HomeAssistant state is not running ({hass.state}), reporting as healthy")
             return self.json({"healthy": True})
 
         use_entity_state_from_db = recorder.is_entity_recorded(hass, ENTITY_NAME)

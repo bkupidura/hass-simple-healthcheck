@@ -16,7 +16,7 @@ Component was created for my K8s HomeAssistant deployment, but any comments or c
 * Component creates new HTTP endpoint `/healthz`
 * Component will subscribe to `simple_healthcheck_event`
 * When event will be received entity `simple_healthcheck.last_seen` will be updated
-* When `simple_healthcheck.last_seen` will not be updated for 30 seconds (by default), `/healthz` endpoint will return unhealthy state
+* When `simple_healthcheck.last_seen` will not be updated for 60 seconds (by default), `/healthz` endpoint will return unhealthy state
 
 ### Fetching entity `simple_healthcheck.last_seen` state
 
@@ -66,7 +66,7 @@ simple_healthcheck:
 ```
 
 * auth_required - enable or disable authentication for `/healthz` endpoint (default: true)
-* threshold - number of seconds to wait before marking as unhealthy (default: 30)
+* threshold - number of seconds to wait before marking as unhealthy (default: 60)
 
 ## HTTP endpoint `/healthz`
 
