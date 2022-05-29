@@ -1,0 +1,10 @@
+{
+  "domain": "simple_healthcheck",
+  "name": "Simple healthcheck",
+  "documentation": "https://github.com/bkupidura/hass-simple-healthcheck",
+  "dependencies": [],
+  "codeowners": ["@bkupidura"],
+  "requirements": [],
+  "iot_class": "calculated",
+  "version": "0.0.1"
+}
