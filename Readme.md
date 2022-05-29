@@ -12,12 +12,11 @@ Component was created for my K8s HomeAssistant deployment, but any comments or c
 
 ## How it works
 
+* Users need to create `simple_healthcheck_keepalive` automation
 * Component creates new HTTP endpoint `/healthz`
-* Component creates automation called `simple_healthcheck_keepalive`
-  * Automation will fire HomeAssistant event `simple_healthcheck_event` every 10 seconds
 * Component will subscribe to `simple_healthcheck_event`
 * When event will be received entity `simple_healthcheck.last_seen` will be updated
-* When new events will not be received for 30 seconds, `/healthz` endpoint will return unhealthy state
+* When `simple_healthcheck.last_seen` will not be updated for 30 seconds, `/healthz` endpoint will return unhealthy state
 
 ### Fetching entity `simple_healthcheck.last_seen` state
 
@@ -50,6 +49,13 @@ Copy `simple_healthcheck` directory into `custom_integrations/` directory.
 ```
 simple_healthcheck:
   auth_required: true
+automation:
+  - alias: 'simple_healthcheck_keepalive'
+    trigger:
+      - platform: time_pattern
+        seconds: '/10'
+    action:
+      - event: simple_healthcheck_event
 ```
 
 ## HTTP endpoint `/healthz`

@@ -51,30 +51,13 @@ async def async_setup(hass, config):
     healthcheck_view = HealthCheckView(auth_required)
     hass.http.register_view(healthcheck_view)
 
-    append_automation(config)
-
     async def handle_healthcheck_event(event):
         now = dt_util.utcnow().timestamp()
         hass.states.async_set(ENTITY_NAME, int(now))
 
     hass.bus.async_listen(HEALTHCHECK_EVENT, handle_healthcheck_event)
-    return True
 
-def append_automation(config):
-    config[AUTOMATION_DOMAIN].append({
-        "alias": AUTOMATION_NAME,
-        "trigger": [
-            {
-                "platform": "time_pattern",
-                "seconds": f"/{HEALTHCHECK_INTERVAL}",
-            },
-        ],
-        "action": [
-            {
-                "event": HEALTHCHECK_EVENT,
-            }
-        ],
-    })
+    return True
 
 
 class HealthCheckView(HomeAssistantView):
