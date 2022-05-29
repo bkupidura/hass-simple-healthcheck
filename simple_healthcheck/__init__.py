@@ -14,23 +14,22 @@ from homeassistant.components import recorder
 
 DOMAIN = "simple_healthcheck"
 
-HEALTHCHECK_EVENT = f"{DOMAIN}_event"
-HEALTHCHECK_INTERVAL = 10
-HEALTHCHECK_THRESHOLD = 3
 HEALTHCHECK_ENDPOINT = "/healthz"
 
+EVENT_NAME = f"{DOMAIN}_event"
 ENTITY_NAME = f"{DOMAIN}.last_seen"
-AUTOMATION_NAME = f"{DOMAIN}_keepalive"
 
 _LOGGER: Final = logging.getLogger(__name__)
 
 CONF_AUTH_REQUIRED = "auth_required"
+CONF_THRESHOLD = "threshold"
 
 CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: vol.Schema(
             {
-                vol.Optional(CONF_AUTH_REQUIRED): cv.boolean,
+                vol.Optional(CONF_AUTH_REQUIRED, default=True): cv.boolean,
+                vol.Optional(CONF_THRESHOLD, default=30): cv.positive_int
             }
         )
     },
@@ -40,13 +39,20 @@ CONFIG_SCHEMA = vol.Schema(
 class ConfData(TypedDict, total=False):
 
     auth_required: bool
+    threshold: int
 
 async def async_setup(hass, config):
     conf: ConfData | None = config.get(DOMAIN)
     if conf is None:
         conf = cast(ConfData, CONFIG_SCHEMA({}))
 
-    auth_required = conf.get(CONF_AUTH_REQUIRED, True)
+    auth_required = conf.get(CONF_AUTH_REQUIRED)
+    threshold = conf.get(CONF_THRESHOLD)
+
+    hass.data[DOMAIN] = {
+        'auth_required': auth_required,
+        'threshold': threshold,
+    }
 
     healthcheck_view = HealthCheckView(auth_required)
     hass.http.register_view(healthcheck_view)
@@ -55,7 +61,7 @@ async def async_setup(hass, config):
         now = dt_util.utcnow().timestamp()
         hass.states.async_set(ENTITY_NAME, int(now))
 
-    hass.bus.async_listen(HEALTHCHECK_EVENT, handle_healthcheck_event)
+    hass.bus.async_listen(EVENT_NAME, handle_healthcheck_event)
 
     return True
 
@@ -70,12 +76,13 @@ class HealthCheckView(HomeAssistantView):
 
     @ha.callback
     def get(self, request):
+        hass = request.app["hass"]
         last_seen = None
 
-        use_entity_state_from_db = recorder.is_entity_recorded(request.app["hass"], ENTITY_NAME)
+        use_entity_state_from_db = recorder.is_entity_recorded(hass, ENTITY_NAME)
         if use_entity_state_from_db is True:
             _LOGGER.debug(f"Trying to fetch {ENTITY_NAME} from database")
-            entity_history = recorder.history.get_last_state_changes(request.app["hass"], 1, ENTITY_NAME)
+            entity_history = recorder.history.get_last_state_changes(hass, 1, ENTITY_NAME)
 
             if entity_history.get(ENTITY_NAME) is not None and len(entity_history.get(ENTITY_NAME)) > 0:
                 last_seen = entity_history[ENTITY_NAME][-1]
@@ -89,7 +96,7 @@ class HealthCheckView(HomeAssistantView):
 
         if last_seen is not None:
             last_keepalive_seconds_ago = int(now - int(last_seen.state))
-            if last_keepalive_seconds_ago < HEALTHCHECK_INTERVAL * HEALTHCHECK_THRESHOLD:
+            if last_keepalive_seconds_ago < hass.data[DOMAIN]['threshold']:
                 _LOGGER.debug(f"HomeAssistant is healthy, last keepalive observed {last_keepalive_seconds_ago} seconds ago")
                 return self.json({"healthy": True})
             else:

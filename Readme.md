@@ -16,7 +16,7 @@ Component was created for my K8s HomeAssistant deployment, but any comments or c
 * Component creates new HTTP endpoint `/healthz`
 * Component will subscribe to `simple_healthcheck_event`
 * When event will be received entity `simple_healthcheck.last_seen` will be updated
-* When `simple_healthcheck.last_seen` will not be updated for 30 seconds, `/healthz` endpoint will return unhealthy state
+* When `simple_healthcheck.last_seen` will not be updated for 30 seconds (by default), `/healthz` endpoint will return unhealthy state
 
 ### Fetching entity `simple_healthcheck.last_seen` state
 
@@ -48,7 +48,6 @@ Copy `simple_healthcheck` directory into `custom_integrations/` directory.
 
 ```
 simple_healthcheck:
-  auth_required: true
 automation:
   - alias: 'simple_healthcheck_keepalive'
     trigger:
@@ -57,6 +56,17 @@ automation:
     action:
       - event: simple_healthcheck_event
 ```
+
+### Possible options
+
+```
+simple_healthcheck:
+  auth_required: true
+  threshold: 45
+```
+
+* auth_required - enable or disable authentication for `/healthz` endpoint (default: true)
+* threshold - number of seconds to wait before marking as unhealthy (default: 30)
 
 ## HTTP endpoint `/healthz`
 
