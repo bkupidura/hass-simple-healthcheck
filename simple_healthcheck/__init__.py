@@ -6,10 +6,10 @@ from typing import TypedDict, cast
 
 import homeassistant.core as ha
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.automation.const import DOMAIN as AUTOMATION_DOMAIN
-from homeassistant.components.http import HomeAssistantView
-from homeassistant.util import dt as dt_util
 from homeassistant.components import recorder
+from homeassistant.components.http import HomeAssistantView
+from homeassistant.core import CoreState
+from homeassistant.util import dt as dt_util
 
 
 DOMAIN = "simple_healthcheck"
@@ -78,6 +78,10 @@ class HealthCheckView(HomeAssistantView):
     def get(self, request):
         hass = request.app["hass"]
         last_seen = None
+
+        if hass.state != CoreState.running:
+            _LOGGER.info(f"HomeAssistant state {hass.state} is not running, reporting as healthy")
+            return self.json({"healthy": True})
 
         use_entity_state_from_db = recorder.is_entity_recorded(hass, ENTITY_NAME)
         if use_entity_state_from_db is True:
