@@ -42,7 +42,7 @@ Currently component will confirm that:
 
 ## Installation
 
-Copy `simple_healthcheck` directory into `custom_integrations/` directory.
+Copy `simple_healthcheck` directory into `custom_components/` directory.
 
 ## Configuration
 

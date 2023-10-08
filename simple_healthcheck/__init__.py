@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import voluptuous as vol
 from typing import TypedDict, cast
@@ -75,7 +76,7 @@ class HealthCheckView(HomeAssistantView):
         self.requires_auth = requires_auth
 
     @ha.callback
-    def get(self, request):
+    async def get(self, request):
         hass = request.app["hass"]
         last_seen = None
 
@@ -86,7 +87,13 @@ class HealthCheckView(HomeAssistantView):
         use_entity_state_from_db = recorder.is_entity_recorded(hass, ENTITY_NAME)
         if use_entity_state_from_db is True:
             _LOGGER.debug(f"Trying to fetch {ENTITY_NAME} from database")
-            entity_history = recorder.history.get_last_state_changes(hass, 1, ENTITY_NAME)
+
+            entity_history = await recorder.get_instance(hass).async_add_executor_job(
+                recorder.history.get_last_state_changes,
+                hass,
+                1,
+                ENTITY_NAME
+            )
 
             if entity_history.get(ENTITY_NAME) is not None and len(entity_history.get(ENTITY_NAME)) > 0:
                 last_seen = entity_history[ENTITY_NAME][-1]
